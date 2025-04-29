@@ -2,7 +2,7 @@ import requests
 from requests.adapters import HTTPAdapter, Retry
 
 
-def init_session(token, max_retries, backoff_factor):
+def init_session(max_retries, backoff_factor):
     session = requests.Session()
     retries = Retry(
         total=max_retries,
