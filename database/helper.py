@@ -5,7 +5,7 @@ def init_db_instance():
     return MSSQLDatabase()
 
 
-def get_ishares_data():
+def get_ishares():
     conn = init_db_instance()
     query = """
     SELECT sub.*
@@ -59,14 +59,4 @@ def get_exchanges(comp=False):
 
     table = conn.select_table(query)
     records = [list(data.values()) for data in table.to_dict("records")]
-
-    result = {}
-    for record in records:
-        ishare, priority, exch = record
-        if ishare not in result:
-            result[ishare] = {}
-
-        if exch not in result[ishare].values():
-            result[ishare][priority] = exch
-
-    return result
+    return records
