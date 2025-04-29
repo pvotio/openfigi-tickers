@@ -1,1 +1,1 @@
-from .mssql import MSSQLDatabase
+from .mssql import MSSQLDatabase  # noqa: F401
