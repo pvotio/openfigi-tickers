@@ -1,11 +1,13 @@
-from decouple import config
+from decouple import Config, RepositoryEnv
+
+config = Config(repository=RepositoryEnv(".env"))
 
 openfigi_tokens_cast = lambda x: x.replace(" ", "").split(",")
 
 
 LOG_LEVEL = config("LOG_LEVEL", default="INFO")
 OUTPUT_TABLE = config("OUTPUT_TABLE")
-BRIGHTDATA_PROXY = config("BRIGHTDATA_PROXY", cast=openfigi_tokens_cast)
+BRIGHTDATA_PROXY = config("BRIGHTDATA_PROXY")
 BRIGHTDATA_PORT = config("BRIGHTDATA_PORT", cast=int)
 BRIGHTDATA_USER = config("BRIGHTDATA_USER")
 BRIGHTDATA_PASSWD = config("BRIGHTDATA_PASSWD")
@@ -13,6 +15,7 @@ ISHARES_QUERY = config("ISHARES_QUERY")
 EXCHANGES_QUERY = config("EXCHANGES_QUERY")
 EXCHANGES_COMP_QUERY = config("EXCHANGES_COMP_QUERY")
 OPENFIGI_TOKENS = config("OPENFIGI_TOKENS", cast=openfigi_tokens_cast)
+OPENFIGI_THREAD_COUNT = config("OPENFIGI_THREAD_COUNT", cast=int, default=5)
 OPENFIGI_MAX_RETRIES = config("OPENFIGI_MAX_RETRIES", cast=int, default=3)
 OPENFIGI_BACKOFF_FACTOR = config("OPENFIGI_BACKOFF_FACTOR", cast=int, default=2)
 MSSQL_AD_LOGIN = config("MSSQL_AD_LOGIN", cast=bool, default=False)
