@@ -6,10 +6,9 @@ import pandas as pd
 import requests
 
 from config import logger, settings
-from database.helper import init_db_instance
 
 
-class Openfigi:
+class OpenFIGI:
 
     OPENFIGI_MAPPING_URL = "https://api.openfigi.com/v3/mapping"
     THREAD_COUNT = settings.OPENFIGI_THREAD_COUNT
@@ -26,16 +25,23 @@ class Openfigi:
         self.ishares_map = {}
         self.raw_openfigi_resp = []
         self.result = []
-        self.conn = init_db_instance()
 
     def run(self):
+        logger.info("Starting Openfigi run")
         self._create_tasks()
+        logger.debug(f"Created {len(self.tasks)} tasks for processing")
         self.batch_tasks = self._create_batch(self.tasks, self.THREAD_COUNT)
+        logger.info(f"Split tasks into {len(self.batch_tasks)} batches")
         self.start_threads()
+        logger.info("All threads have completed")
         self._cleanup_duplicates()
+        logger.info("Duplicates cleaned up")
         self._filter_exchange_pairs()
+        logger.info("Exchange pairs filtered")
         self._assemble_final()
+        logger.info(f"Final assembly complete with {len(self.result)} records")
         self.dataframe = pd.DataFrame(self.result)
+        logger.info("Converted result to DataFrame")
         return list(self.result)
 
     def start_threads(self):
@@ -44,15 +50,17 @@ class Openfigi:
             if tasks:
                 t = threading.Thread(target=self.worker, args=[tasks])
                 threads.append(t)
+                logger.debug(f"Starting thread {t.name} for batch of size {len(tasks)}")
                 t.start()
 
         for t in threads:
             t.join()
+            logger.debug(f"Thread {t.name} has finished")
 
     def worker(self, tasks):
         while tasks and self.alive:
             batch = tasks[:30]
-            tasks[:] = tasks[len(batch) :]
+            tasks[:] = tasks[len(batch):]
             requests_list = self._create_request_body(batch)
             body = [x["body"] for x in requests_list]
 
@@ -78,22 +86,29 @@ class Openfigi:
         }
         try:
             proxies = {
-                "http": f"http://{settings.BRIGHTDATA_USER}-session-{random.random()}:{settings.BRIGHTDATA_PASSWD}@{settings.BRIGHTDATA_PROXY}:{settings.BRIGHTDATA_PORT}",
-                "https": f"https://{settings.BRIGHTDATA_USER}-session-{random.random()}:{settings.BRIGHTDATA_PASSWD}@{settings.BRIGHTDATA_PROXY}:{settings.BRIGHTDATA_PORT}",
+                "http": f"http://{settings.BRIGHTDATA_USER}-session-{random.random()}:{settings.BRIGHTDATA_PASSWD}@{settings.BRIGHTDATA_PROXY}:{settings.BRIGHTDATA_PORT}",  # noqa: E501
+                "https": f"https://{settings.BRIGHTDATA_USER}-session-{random.random()}:{settings.BRIGHTDATA_PASSWD}@{settings.BRIGHTDATA_PROXY}:{settings.BRIGHTDATA_PORT}",  # noqa: E501
             }
+            logger.debug(
+                f"Sending request to OpenFIGI with {len(body)} items, retry={retry}"
+            )
             resp = requests.post(
                 self.OPENFIGI_MAPPING_URL, headers=headers, json=body, proxies=proxies
             )
             if resp.status_code == 200:
+                logger.debug("Received successful response from OpenFIGI API")
                 return resp.json()
             else:
-                print(resp.status_code, resp.json())
-            raise requests.RequestException
-        except Exception:
+                logger.warning(f"Unexpected status {resp.status_code}: {resp.text}")
+            resp.raise_for_status()
+        except Exception as e:
+            logger.error(f"Error requesting OpenFIGI API: {e}")
             if retry < self.MAX_RETRIES:
-                time.sleep(retry**self.BACKOFF_FACTOR)
+                backoff = retry**self.BACKOFF_FACTOR
+                logger.info(f"Retrying after {backoff} seconds (retry {retry + 1})")
+                time.sleep(backoff)
                 return self._request_api(body, retry + 1)
-
+            logger.error("Max retries reached, giving up on this batch")
             return []
 
     def _create_tasks(self):
@@ -163,7 +178,7 @@ class Openfigi:
                     key = zrow
                 elif resolved_exch_code == zrow["response"]["exchCode"]:
                     key = irow
-                    
+
                 self.raw_openfigi_resp.remove(key)
 
     def resolve_exch_pair(self, exch_a, exch_b):
@@ -173,19 +188,15 @@ class Openfigi:
                 return exchange_dict[1]
 
     def _assemble_final(self):
+        logger.info("Assembling final results")
         for item in self.raw_openfigi_resp:
-            try:
-                original = self.ishares_map[
-                    f"{item['data']['ISIN']}:{item['data']['Exchange']}"
-                ].copy()
-            except Exception:
-                print(
-                    "item not found",
-                    f"{item['data']['ISIN']}:{item['data']['Exchange']}",
-                )
+            resp = item.get("response", {})
+            key = f"{item['data']['ISIN']}:{item['data']['Exchange']}"
+            original = self.ishares_map.get(key)
+            if not original:
+                logger.error(f"Original record not found for {key}")
                 continue
 
-            resp = item["response"]
             if resp:
                 if resp.get("ticker") != resp.get("securityDescription"):
                     resp["ticker"] = resp.get("securityDescription")
@@ -196,15 +207,19 @@ class Openfigi:
 
     @staticmethod
     def _create_batch(data, count):
+        logger.debug(
+            f"Creating batch from data of length {len(data)} with count {count}"
+        )
         step = int(round(len(data) / count))
         if not step:
             return [data]
 
-        result = []
+        batches = []
         for i in range(0, len(data), step):
-            result.append(data[i : i + step])
+            batches.append(data[i: i + step])
 
-        return result
+        logger.debug(f"Created {len(batches)} batches")
+        return batches
 
     @staticmethod
     def _create_request_body(batch):
@@ -222,4 +237,5 @@ class Openfigi:
                     }
                 )
 
+        logger.debug(f"Request body created with {len(body)} entries")
         return body
