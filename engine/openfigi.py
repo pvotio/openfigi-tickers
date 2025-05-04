@@ -41,7 +41,6 @@ class OpenFIGI:
         self._assemble_final()
         logger.info(f"Final assembly complete with {len(self.result)} records")
         self.dataframe = pd.DataFrame(self.result)
-        logger.info("Converted result to DataFrame")
         return list(self.result)
 
     def start_threads(self):

@@ -1,47 +1,83 @@
 import pandas as pd
 
 from config import logger
-from database.helper import (get_all_exchanges, get_currencies,
-                             get_eod_tickers, get_exchanges_priority,
-                             get_ishares)
+from database.helper import (
+    get_all_exchanges,
+    get_currencies,
+    get_eod_tickers,
+    get_exchanges_priority,
+    get_ishares,
+)
 from engine.openfigi import OpenFIGI
 
 
 class Core:
 
     def __init__(self):
+        logger.info("Initializing Core")
         self.eod_exch_index = {}
         self.load_db_data()
 
     def run(self):
         ofg = OpenFIGI(self.ishares, self.exchanges_priority, keep_unlisted=True)
+        logger.info("Running OpenFIGI for primary exchanges")
         result = ofg.run()
+        logger.info(f"Received {len(result)} results from primary OpenFIGI")
+
         unmatched_records = self.get_unmatched_records(result)
+        logger.info(f"Found {len(unmatched_records)} unmatched records")
+
         ofg_comp = OpenFIGI(
             unmatched_records, self.exchanges_priority_comp, keep_unlisted=False
         )
+        logger.info("Running OpenFIGI for component exchanges")
         result_comp = ofg_comp.run()
+        logger.info(f"Received {len(result_comp)} results from component OpenFIGI")
+
         self.result_combined = self.combine_opnefigi_results(result, result_comp)
-        print(len(self.result_combined))
+        logger.info(f"Combined total result count: {len(self.result_combined)}")
+
         self._generate_tickers()
+        logger.info("Generated tickers for combined results")
+
         self._add_exchange()
+        logger.info("Add exchange data to records")
+
         self.dataframe = pd.DataFrame(self.result_combined)
+        logger.info("Core.run() complete")
         return self.dataframe
 
     def load_db_data(self):
+        logger.info("Loading data from database")
         self.ishares = get_ishares()
+        logger.debug(f"Loaded {len(self.ishares)} ishares records")
+
         self.currencies = get_currencies()
+        logger.debug(f"Loaded {len(self.currencies)} currency mappings")
+
         self.eod_tickers_list, self.isin_eod_tickers_map = get_eod_tickers()
+        logger.debug(f"Loaded {len(self.eod_tickers_list)} EOD tickers")
+
         self.exchanges = get_all_exchanges()
+        logger.debug(f"Loaded {len(self.exchanges)} exchange groups")
+
         self.exchanges_priority = self.get_exchanges()
+        logger.debug(
+            f"Built exchange priority map with {len(self.exchanges_priority)} entries"
+        )
+
         self.exchanges_priority_comp = self.get_exchanges(comp=True)
+        logger.debug(
+            f"Built complementary exchange priority map with {len(self.exchanges_priority_comp)} entries"  # noqa: E501
+        )
 
     def _add_exchange(self):
+        logger.info("Adding exchange metadata to result records")
         for row in self.result_combined:
             if "exchCode" not in row:
                 return row
 
-            if not row["ishares_exchange_name"] in self.exchanges:
+            if row["ishares_exchange_name"] not in self.exchanges:
                 return row
 
             for exch in self.exchanges[row["ishares_exchange_name"]]:
@@ -59,7 +95,9 @@ class Core:
                 row["bbg_exch"] = row["bbg_exch_comp"]
 
     def _generate_tickers(self):
-        for row in self.result_combined:
+        logger.info("Generating tickers for each result row")
+        for idx, row in enumerate(self.result_combined):
+            logger.debug(f"Generating tickers for row {idx}")
             for func in [
                 self._generate_eod_ticker,
                 (self._generate_eod_ticker,),
@@ -67,7 +105,6 @@ class Core:
                 (self._generate_yahoo_ticker,),
                 self._generate_openfigi_ticker,
             ]:
-
                 if isinstance(func, tuple):
                     resp = func[0](row, comp=True)
                 else:
