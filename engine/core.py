@@ -41,7 +41,10 @@ class Core:
         logger.info("Generated tickers for combined results")
 
         self._add_exchange()
-        logger.info("Add exchange data to records")
+        logger.info("Added exchange data to records")
+
+        self._add_currency()
+        logger.info("Added currency data to records")
 
         self.dataframe = pd.DataFrame(self.result_combined)
         logger.info("Core.run() complete")
@@ -70,6 +73,12 @@ class Core:
         logger.debug(
             f"Built complementary exchange priority map with {len(self.exchanges_priority_comp)} entries"  # noqa: E501
         )
+
+    def _add_currency(self):
+        logger.info("Adding exchange metadata to result records")
+        for row in self.result_combined:
+            ishares_exch = row["ishares_exchange_name"]
+            row["Market Currency"] = self.get_currency_by_exch(ishares_exch)
 
     def _add_exchange(self):
         logger.info("Adding exchange metadata to result records")
