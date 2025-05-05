@@ -11,7 +11,6 @@ def main():
     logger.info("Transforming Data")
     agent = Transformer(dataframe)
     transformed_dataframe = agent.transform()
-    transformed_dataframe.to_csv("openfigi_transformed.csv")
     logger.info(f"\n\n{transformed_dataframe}")
     logger.info("Preparing Database Inserter")
     conn = init_db_instance()

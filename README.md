@@ -44,7 +44,6 @@ The system requires the following input data and configuration:
 
 5. **Output**:
    - Generates a clean, enriched dataset.
-   - Saves to CSV (`openfigi_transformed.csv`).
    - Inserts into a specified MSSQL table (configured via `OUTPUT_TABLE`).
 
 ## Installation
