@@ -77,9 +77,7 @@ class Transformer:
                     else:
                         cleaned_row[final_col] = self.valcheck(value)
                 else:
-                    cleaned_row[final_col] = (
-                        None
-                    )
+                    cleaned_row[final_col] = None
 
             cleaned_row["timestamp_created_utc"] = self.timenow()
             cleaned_rows.append(cleaned_row)
