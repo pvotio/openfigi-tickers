@@ -92,7 +92,6 @@ class MSSQLDatabase(object):
                 "bbg_name",
                 "ishares_exchange_name",
                 "ishares_name",
-                "ishares_index",
             ]:
                 custom[column] = "varchar(200)"
             elif column in ["currency"]:
@@ -116,25 +115,6 @@ class MSSQLDatabase(object):
             logger.error(f"Error inserting into table {table_name}: {e}")
         finally:
             self.cnx.close()
-
-    def __getcolumn__(self, schema, table_name, column_name):
-        self.reopen_connection()
-        if isinstance(column_name, list):
-            column_name = "".join(f"{x}," for x in column_name)[:-1]
-
-        query = f"SELECT {column_name} from {schema}.{table_name}"
-        column_list = list()
-
-        cursor = self.cnx.cursor()
-        cursor.execute(query)
-        for row in cursor:
-            column_list.append(row)
-
-        return column_list
-
-    def __getdf__(self, schema, table_name):
-        self.reopen_connection()
-        return pd.read_sql(f"select * from {schema}.{table_name}", self.cnx)
 
     @staticmethod
     def fecth_token():
