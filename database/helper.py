@@ -17,9 +17,9 @@ def get_ishares():
 def get_exchanges_priority(comp=False):
     conn = init_db_instance()
     if comp:
-        query = settings.EXCHANGES_COMP_QUERY
+        query = settings.EXCHANGES_COMP_PRIORITY_QUERY
     else:
-        query = settings.EXCHANGES_QUERY
+        query = settings.EXCHANGES_PRIORITY_QUERY
 
     table = conn.select_table(query)
     records = [list(data.values()) for data in table.to_dict("records")]
@@ -28,22 +28,7 @@ def get_exchanges_priority(comp=False):
 
 def get_all_exchanges():
     conn = init_db_instance()
-    query = """
-    SELECT
-        ishares_exchange_name,
-        ext1_exch,
-        ext2_exch,
-        ext3_exch,
-        bbg_exch,
-        bbg_exch_comp,
-        country_iso2,
-        ext2_exch_comp,
-        ext3_exch_comp,
-        ext8_exch_comp
-    FROM mdd.Exchanges
-    WHERE ishares_exchange_name IS NOT NULL
-    """
-
+    query = settings.ALL_EXCHANGES_QUERY
     try:
         table = conn.select_table(query)
         result = {}
@@ -51,7 +36,6 @@ def get_all_exchanges():
         for row in table.to_dict("records"):
             exch_name = row["ishares_exchange_name"]
             exch_info = {
-                "12data": row["ext1_exch"],
                 "eod": row["ext2_exch"],
                 "yahoo": row["ext3_exch"],
                 "bbg_exch": row["bbg_exch"],
@@ -76,9 +60,7 @@ def get_all_exchanges():
 
 def get_currencies():
     conn = init_db_instance()
-    query = """
-    select ishares_exchange_name, currency_country from mdd.Exchanges
-    """
+    query = settings.CURRENCIES_QUERY
     table = conn.select_table(query)
     records = {
         list(data.values())[0]: list(data.values())[1]
@@ -89,9 +71,7 @@ def get_currencies():
 
 def get_eod_tickers():
     conn = init_db_instance()
-    query = """
-    select isin, ext2_ticker from etl.eodhd_tickers where ext2_ticker is not null
-    """
+    query = settings.EOD_TICKERS_QUERY
     table = conn.select_table(query)
     tickers = list(table.to_dict("list").values())[1]
     isin_ticker_map = {}
