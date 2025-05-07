@@ -1,7 +1,7 @@
 
 # OpenFIGI Tickers
 
-**OpenFIGI Tickers is A production‑ready Python micro‑service that enriches iShares index constituents with Bloomberg OpenFIGI, Yahoo Finance and EOD Historical Data tickers, then writes the consolidated reference data back to Azure SQL — all running password‑less on Azure Kubernetes Service (AKS) behind an Azure DevOps CI/CD pipeline.**
+OpenFIGI Tickers is a production‑ready Python micro‑service that enriches iShares index constituents with Bloomberg OpenFIGI, Yahoo Finance and EOD Historical Data tickers, then writes the consolidated reference data back to Azure SQL — all running password‑less on Azure Kubernetes Service (AKS) behind an Azure DevOps CI/CD pipeline.
 
 [![Build Status](https://img.shields.io/badge/Azure%20DevOps-CI%20%E2%9C%94-blue)](#)
 [![Python](https://img.shields.io/badge/Python-3.13-blue)](#)
