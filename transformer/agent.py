@@ -54,7 +54,6 @@ class Transformer:
             "OPENFIGI COMP Ticker": "bbg_comp_ticker",
             "ext2_comp_ticker": "ext2_comp_ticker",
             "ext3_comp_ticker": "ext3_comp_ticker",
-            "ext8_comp_ticker": "ext8_comp_ticker",
             "bbg_exch": "bbg_exch",
             "bbg_exch_comp": "bbg_exch_comp",
             "country_iso2": "country_iso2",

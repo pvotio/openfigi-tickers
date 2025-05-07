@@ -43,7 +43,6 @@ def get_all_exchanges():
                 "country_iso2": row["country_iso2"],
                 "ext2_exch_comp": row["ext2_exch_comp"],
                 "ext3_exch_comp": row["ext3_exch_comp"],
-                "ext8_exch_comp": row["ext8_exch_comp"],
             }
 
             if exch_name not in result:
