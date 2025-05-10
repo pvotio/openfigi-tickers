@@ -1,6 +1,4 @@
-from decouple import Config, RepositoryEnv
-
-config = Config(repository=RepositoryEnv(".env"))
+from decouple import config
 
 openfigi_tokens_cast = lambda x: x.replace(" ", "").split(",")
 
