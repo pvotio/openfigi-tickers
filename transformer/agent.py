@@ -69,7 +69,7 @@ class Transformer:
             for raw_col, final_col in COLUMN_MAP.items():
                 if raw_col in row:
                     value = row[raw_col]
-                    if raw_col in ["cusip", "sedol"]:
+                    if raw_col in ["cusip", "sedol", "securityDescription", "exchange_ticker"]:
                         cleaned_row[final_col] = self.valcheck(
                             value, only_null_check=True
                         )
