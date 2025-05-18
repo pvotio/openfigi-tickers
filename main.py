@@ -14,7 +14,7 @@ def main():
     if transformed_dataframe.empty:
         logger.warning("Transformed dataframe is empty")
         return
-    
+
     logger.info(f"\n\n{transformed_dataframe}")
     logger.info("Preparing Database Inserter")
     conn = init_db_instance()
